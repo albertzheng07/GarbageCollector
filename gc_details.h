@@ -18,9 +18,19 @@ array, then arraySize contains its size */
     // If this is an array, then size specifies
     // the size of the array.
 
-    PtrDetails(void)
+    PtrDetails(T *ptr, unsigned size = 0)
     {
-        // TODO: Implement PtrDetails
+        arraySize = size;
+        if (size > 0)
+        {
+            memPtr = new T[size];
+            isArray = true;
+        }
+        else
+        {
+            isArray = false;
+        }
+        memPtr = ptr;  
     }
 };
 // Overloading operator== allows two class objects to be compared.
@@ -29,5 +39,7 @@ template <class T>
 bool operator==(const PtrDetails<T> &ob1,
                 const PtrDetails<T> &ob2)
 {
-    // TODO: Implement operator==
+    bool memPtrSame = (obj1.memPtr == obj2.memPtr);;
+
+    return memPtrSame;
 }

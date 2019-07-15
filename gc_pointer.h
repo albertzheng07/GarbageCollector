@@ -105,24 +105,60 @@ Pointer<T,size>::Pointer(T *t){
     if (first)
         atexit(shutdown);
     first = false;
-
-    // TODO: Implement Pointer constructor
-    // Lab: Smart Pointer Project Lab
-
+    addr = t;
+    if (addr)
+    {
+        typename std::list<PtrDetails<T> >::iterator p;
+        p = findPtrInfo(addr);
+        if (p == refContainer.end()) // new pointer
+        {
+            if (size > 0)
+            {
+                isArray = true;
+                arraySize = size;        
+            }                
+            PtrDetails<T> ptrD(t,size); // add to refContainer if brand new pointer
+            ptrD.refcount = 1;
+            refContainer.push_back(ptrD);            
+        }
+        else // found in ref countainer
+        {
+            p->refcount++; // increment refcount if same pointer is found
+            arraySize = p->arraySize;
+            isArray = p->isArray;
+        }  
+    }
 }
 // Copy constructor.
+// create copy of previously defined Pointer object
 template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
-
-    // TODO: Implement Pointer constructor
+    typename std::list<PtrDetails<T> >::iterator p;
+    // check that the previous pointer exists in the refContainer
+    p = findPtrInfo(ob.addr);
+    // increase refcount of previous pointer details 
+    if (p != refContainer.end()) // p is found, increment refcount
+    {
+        p->refcount++;
+    } 
+    // assign private variables    
+    addr = ob.addr; 
+    isArray = ob.isArray;
+    arraySize = ob.arraySize;
+    // construct new pointer object from obj
     // Lab: Smart Pointer Project Lab
-
 }
 
 // Destructor for Pointer.
 template <class T, int size>
 Pointer<T, size>::~Pointer(){
-    
+   typename std::list<PtrDetails<T> >::iterator p;
+    p = findPtrInfo(addr); // get current refCount of currently assigned pointer
+    if (p->refcount) 
+    {
+        p->refcount--; // decrement total ref count since pointer has gone out of scope
+    }
+    collect(); // collect any unused memory which refcount has reached 0    
     // TODO: Implement Pointer destructor
     // Lab: New and Delete Project Lab
 }
@@ -131,28 +167,76 @@ Pointer<T, size>::~Pointer(){
 // one object was freed.
 template <class T, int size>
 bool Pointer<T, size>::collect(){
-
+    bool memfreed = false;
+    typename std::list<PtrDetails<T> >::iterator p;
+    do{  
+        for (p = refContainer.begin(); p != refContainer.end(); p++){
+            if (p->refcount > 0) // pointer still being used
+                continue; // go to next pointer in container list
+            memfreed = true; // free memory
+            refContainer.remove(*p); // remove pointer details object from list  
+            if(p->memPtr) // not null
+            {
+                if(p->isArray)
+                {
+                    delete[] p->memPtr; // delete memory for entire array
+                }
+                else
+                {
+                    delete p->memPtr;
+                } 
+            }
+        break; // restart search from  beginning
+        }
+    } while (p != refContainer.end());
     // TODO: Implement collect function
     // LAB: New and Delete Project Lab
     // Note: collect() will be called in the destructor
-    return false;
+    return memfreed;
 }
 
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
-T *Pointer<T, size>::operator=(T *t){
-
+T * Pointer<T, size>::operator=(T *t){    
+    typename std::list<PtrDetails<T> >::iterator p;
+    if (t != addr) // if the pointers are different
+    {
+        p = findPtrInfo(addr); // get current refCount of currently assigned pointer
+        if (p != refContainer.end()) // once found, decrement refCount
+        {
+            p->refcount--;
+        }
+        p = findPtrInfo(t); // get refCount of the new pointer
+        if (p != refContainer.end()) // once found, increment refCount since you are adding another one
+        {
+            p->refcount++;
+        }
+    }
     // TODO: Implement operator==
     // LAB: Smart Pointer Project Lab
-
+    return t;
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
-Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
-
-    // TODO: Implement operator==
-    // LAB: Smart Pointer Project Lab
-
+Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){    
+    typename std::list<PtrDetails<T> >::iterator p;
+    if (addr != rv.addr) // if the pointers are different
+    {
+        p = findPtrInfo(addr); // get current refCount of currently assigned pointer
+        if (p != refContainer.end()) // once found, decrement refCount
+        {
+            p->refcount--;
+        }
+        p = findPtrInfo(rv.addr); // get refCount of the new pointer
+        if (p != refContainer.end()) // once found, increment refCount since you are adding another one
+        {
+            p->refcount++;
+        }
+        // replace current private vars with the incoming pointer
+        addr = rv.addr;
+        isArray = rv.isArray;
+        arraySize = rv.arraySize;   
+    }
 }
 
 // A utility function that displays refContainer.
