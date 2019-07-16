@@ -50,7 +50,8 @@ public:
     // one object was freed.
     static bool collect();
     // Overload assignment of pointer to Pointer.
-    T *operator=(T *t);
+    //T *operator=(T *t);
+    Pointer &operator=(T *t);
     // Overload assignment of Pointer to Pointer.
     Pointer &operator=(Pointer &rv);
     // Return a reference to the object pointed
@@ -179,6 +180,7 @@ bool Pointer<T, size>::collect(){
             {
                 if(p->isArray)
                 {
+                    // std::cout << "test" << "\n";
                     delete[] p->memPtr; // delete memory for entire array
                 }
                 else
@@ -197,7 +199,7 @@ bool Pointer<T, size>::collect(){
 
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
-T * Pointer<T, size>::operator=(T *t){    
+Pointer<T, size> & Pointer<T, size>::operator=(T *t){    
     typename std::list<PtrDetails<T> >::iterator p;
     if (t != addr) // if the pointers are different
     {
@@ -206,15 +208,40 @@ T * Pointer<T, size>::operator=(T *t){
         {
             p->refcount--;
         }
-        p = findPtrInfo(t); // get refCount of the new pointer
-        if (p != refContainer.end()) // once found, increment refCount since you are adding another one
+        // overwrite this Pointer class
+        addr = t;
+        if (t) // check incoming pointer
         {
-            p->refcount++;
-        }
+            typename std::list<PtrDetails<T> >::iterator p;
+            p = findPtrInfo(t);
+            if (p == refContainer.end()) // new pointer
+            {
+                if (size > 0)
+                {
+                    isArray = true;
+                    arraySize = size;        
+                }                
+                PtrDetails<T> ptrD(t,size); // add to refContainer if brand new pointer
+                ptrD.refcount = 1;
+                refContainer.push_back(ptrD);            
+            }
+            else // found in ref countainer
+            {
+                p->refcount++; // increment refcount if same pointer is found
+                arraySize = p->arraySize;
+                isArray = p->isArray;
+            }  
+        }    
+        // else // if not found, add the new pointer to the refcountainer
+        // {
+        //Pointer<T,size> Pointer(t); // create new pointer
+        // }
+        //return Pointer.addr;
+        //return ;
     }
     // TODO: Implement operator==
     // LAB: Smart Pointer Project Lab
-    return t;
+    return *this;
 }
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
@@ -227,16 +254,10 @@ Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
         {
             p->refcount--;
         }
-        p = findPtrInfo(rv.addr); // get refCount of the new pointer
-        if (p != refContainer.end()) // once found, increment refCount since you are adding another one
-        {
-            p->refcount++;
-        }
-        // replace current private vars with the incoming pointer
-        addr = rv.addr;
-        isArray = rv.isArray;
-        arraySize = rv.arraySize;   
+        Pointer<T,size> copyPointer(const Pointer &rv);
+        return copyPointer;
     }
+    return rv;
 }
 
 // A utility function that displays refContainer.
@@ -244,7 +265,7 @@ template <class T, int size>
 void Pointer<T, size>::showlist(){
     typename std::list<PtrDetails<T> >::iterator p;
     std::cout << "refContainer<" << typeid(T).name() << ", " << size << ">:\n";
-    std::cout << "memPtr refcount value\n ";
+    std::cout << "memPtr refcount value isArray arraySize\n ";
     if (refContainer.begin() == refContainer.end())
     {
         std::cout << " Container is empty!\n\n ";
@@ -257,6 +278,8 @@ void Pointer<T, size>::showlist(){
             std::cout << " " << *p->memPtr;
         else
             std::cout << "---";
+        std::cout << " " << p->isArray;
+        std::cout << " " << p->arraySize;      
         std::cout << std::endl;
     }
     std::cout << std::endl;
