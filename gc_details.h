@@ -23,7 +23,6 @@ array, then arraySize contains its size */
         arraySize = size;
         if (size > 0)
         {
-            memPtr = new T[size];
             isArray = true;
         }
         else

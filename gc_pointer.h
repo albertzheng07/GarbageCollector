@@ -160,8 +160,6 @@ Pointer<T, size>::~Pointer(){
         p->refcount--; // decrement total ref count since pointer has gone out of scope
     }
     collect(); // collect any unused memory which refcount has reached 0    
-    // TODO: Implement Pointer destructor
-    // Lab: New and Delete Project Lab
 }
 
 // Collect garbage. Returns true if at least
@@ -191,9 +189,6 @@ bool Pointer<T, size>::collect(){
         break; // restart search from  beginning
         }
     } while (p != refContainer.end());
-    // TODO: Implement collect function
-    // LAB: New and Delete Project Lab
-    // Note: collect() will be called in the destructor
     return memfreed;
 }
 
@@ -225,22 +220,14 @@ Pointer<T, size> & Pointer<T, size>::operator=(T *t){
                 ptrD.refcount = 1;
                 refContainer.push_back(ptrD);            
             }
-            else // found in ref countainer
+            else // found in ref container
             {
                 p->refcount++; // increment refcount if same pointer is found
                 arraySize = p->arraySize;
                 isArray = p->isArray;
             }  
         }    
-        // else // if not found, add the new pointer to the refcountainer
-        // {
-        //Pointer<T,size> Pointer(t); // create new pointer
-        // }
-        //return Pointer.addr;
-        //return ;
     }
-    // TODO: Implement operator==
-    // LAB: Smart Pointer Project Lab
     return *this;
 }
 // Overload assignment of Pointer to Pointer.
